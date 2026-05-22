@@ -43,7 +43,7 @@ public class ImageApp extends Application {
         headerBox.setPadding(new Insets(10));
         Label titleLabel = new Label("Aplikacja do Obróbki Obrazów");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        Label logoLabel = new Label("Politechnika Wrocławska");
+        Label logoLabel = new Label("x");
         logoLabel.setTextFill(Color.DARKORANGE);
         headerBox.getChildren().addAll(titleLabel, logoLabel);
 
