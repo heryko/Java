@@ -19,6 +19,16 @@ import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 
+
+//main
+//start
+//setButtonsState
+//loadImage
+//openScaleModal
+//openThresholdModal
+//openSaveModal
+//showToast
+
 public class ImageApp extends Application {
 
     private Image originalImage;
@@ -29,6 +39,7 @@ public class ImageApp extends Application {
     private ImageView processedView = new ImageView();
     private Button btnLoad, btnSave, btnScale, btnRotateLeft, btnRotateRight, btnExecute;
     private ComboBox<String> operationComboBox;
+    private Label welcomeLabel;
 
     public static void main(String[] args) {
         launch(args);
@@ -38,14 +49,46 @@ public class ImageApp extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Przetwarzanie Obrazów");
 
-        VBox headerBox = new VBox(5);
+        HBox headerBox = new HBox(20);
         headerBox.setAlignment(Pos.CENTER);
-        headerBox.setPadding(new Insets(10));
-        Label titleLabel = new Label("Aplikacja do Obróbki Obrazów");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        Label logoLabel = new Label("x");
-        logoLabel.setTextFill(Color.DARKORANGE);
-        headerBox.getChildren().addAll(titleLabel, logoLabel);
+        headerBox.setPadding(new Insets(15));
+        headerBox.setStyle("-fx-background-color: #f4f4f4; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;");
+
+        ImageView logoView = new ImageView();
+        try {
+            Image logoImage = new Image(getClass().getResourceAsStream("/logo.png"));
+            logoView.setImage(logoImage);
+            logoView.setFitHeight(45);
+            logoView.setPreserveRatio(true);
+        } catch (Exception e) {
+            try {
+                Image logoImage = new Image("file:logo.png");
+                logoView.setImage(logoImage);
+                logoView.setFitHeight(45);
+                logoView.setPreserveRatio(true);
+            } catch (Exception ex) {
+                Label fallbackLogo = new Label("PWr");
+                fallbackLogo.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+                headerBox.getChildren().add(fallbackLogo);
+            }
+        }
+
+        VBox titleAndSubtitle = new VBox(2);
+        titleAndSubtitle.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("Platformy Programistyczne: Przetwarzanie Obrazów");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        titleLabel.setTextFill(Color.web("#601A1A"));
+
+        Label subtitleLabel = new Label("Politechnika Wrocławska");
+        subtitleLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+        subtitleLabel.setTextFill(Color.GRAY);
+
+        titleAndSubtitle.getChildren().addAll(titleLabel, subtitleLabel);
+        if (logoView.getImage() != null) {
+            headerBox.getChildren().add(logoView);
+        }
+        headerBox.getChildren().add(titleAndSubtitle);
 
         HBox controlPanel = new HBox(10);
         controlPanel.setAlignment(Pos.CENTER);
@@ -54,8 +97,9 @@ public class ImageApp extends Application {
         btnLoad = new Button("Wczytaj obraz");
         btnSave = new Button("Zapisz obraz");
         btnScale = new Button("Skaluj");
-        btnRotateLeft = new Button("↺ 90°");
-        btnRotateRight = new Button("↻ 90°");
+
+        btnRotateLeft = new Button("← 90°");
+        btnRotateRight = new Button("→ 90°");
 
         operationComboBox = new ComboBox<>(FXCollections.observableArrayList("Negatyw", "Progowanie", "Konturowanie"));
         operationComboBox.setPromptText("Wybierz operację");
@@ -63,6 +107,11 @@ public class ImageApp extends Application {
 
         btnExecute = new Button("Wykonaj");
         controlPanel.getChildren().addAll(btnLoad, operationComboBox, btnExecute, btnScale, btnRotateLeft, btnRotateRight, btnSave);
+
+        welcomeLabel = new Label("Witaj w aplikacji! Użyj przycisku 'Wczytaj obraz', aby rozpocząć edycję grafiki.");
+        welcomeLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 14));
+        welcomeLabel.setTextFill(Color.web("#555555"));
+        welcomeLabel.setStyle("-fx-background-color: #EBF5FB; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #AED6F1; -fx-border-radius: 8;");
 
         HBox imagePanel = new HBox(20);
         imagePanel.setAlignment(Pos.CENTER);
@@ -81,6 +130,8 @@ public class ImageApp extends Application {
         boxOriginal.setAlignment(Pos.CENTER);
         boxProcessed.setAlignment(Pos.CENTER);
         imagePanel.getChildren().addAll(boxOriginal, boxProcessed);
+
+        StackPane workspaceStack = new StackPane(imagePanel, welcomeLabel);
 
         HBox footerBox = new HBox();
         footerBox.setAlignment(Pos.CENTER);
@@ -119,16 +170,17 @@ public class ImageApp extends Application {
             try {
                 if (selected.equals("Negatyw")) {
                     processedImage = ImageProcessor.negative(processedImage);
+                    processedView.setImage(processedImage);
+                    isModified = true;
                     showToast(primaryStage, "Negatyw został wygenerowany pomyślnie!", false);
                 } else if (selected.equals("Progowanie")) {
                     openThresholdModal(primaryStage);
-                    return;
                 } else if (selected.equals("Konturowanie")) {
                     processedImage = ImageProcessor.edgeDetection(processedImage);
+                    processedView.setImage(processedImage);
+                    isModified = true;
                     showToast(primaryStage, "Konturowanie zostało przeprowadzone pomyślnie!", false);
                 }
-                processedView.setImage(processedImage);
-                isModified = true;
             } catch (Exception ex) {
                 if (selected.equals("Negatyw")) showToast(primaryStage, "Nie udało się wykonać negatywu.", true);
                 else if (selected.equals("Konturowanie")) showToast(primaryStage, "Nie udało się wykonać konturowania.", true);
@@ -137,7 +189,7 @@ public class ImageApp extends Application {
 
         BorderPane root = new BorderPane();
         root.setTop(headerBox);
-        VBox centerBox = new VBox(10, controlPanel, imagePanel);
+        VBox centerBox = new VBox(10, controlPanel, workspaceStack);
         root.setCenter(centerBox);
         root.setBottom(footerBox);
 
@@ -166,15 +218,19 @@ public class ImageApp extends Application {
                 return;
             }
             try {
-                if (originalImage != null) {
-                    originalImage = null;
-                    processedImage = null;
-                    System.gc();
-                }
+                originalImage = null;
+                processedImage = null;
+                originalView.setImage(null);
+                processedView.setImage(null);
+                System.gc();
+
                 originalImage = new Image(selectedFile.toURI().toString());
                 processedImage = originalImage;
                 originalView.setImage(originalImage);
                 processedView.setImage(processedImage);
+
+                welcomeLabel.setVisible(false);
+
                 isModified = false;
                 setButtonsState(true);
                 showToast(stage, "Pomyślnie załadowano plik", false);
@@ -219,7 +275,12 @@ public class ImageApp extends Application {
 
         Button btnConfirm = new Button("Zmień rozmiar");
         Button btnCancel = new Button("Anuluj");
-        btnCancel.setOnAction(e -> modal.close());
+
+        btnCancel.setOnAction(e -> {
+            txtWidth.clear();
+            txtHeight.clear();
+            modal.close();
+        });
 
         btnConfirm.setOnAction(e -> {
             lblWidthError.setText("");
@@ -264,7 +325,11 @@ public class ImageApp extends Application {
 
         Button btnOk = new Button("Wykonaj progowanie");
         Button btnCancel = new Button("Anuluj");
-        btnCancel.setOnAction(e -> modal.close());
+
+        btnCancel.setOnAction(e -> {
+            txtThreshold.clear();
+            modal.close();
+        });
 
         btnOk.setOnAction(e -> {
             if(txtThreshold.getText().isEmpty()) return;
@@ -280,7 +345,7 @@ public class ImageApp extends Application {
                 showToast(parent, "Progowanie zostało przeprowadzone pomyślnie!", false);
                 modal.close();
             } catch (Exception ex) {
-                showToast(parent, "Nie udało się wykonac progowania.", true);
+                showToast(parent, "Nie udało się wykonać progowania.", true);
                 modal.close();
             }
         });
@@ -318,7 +383,12 @@ public class ImageApp extends Application {
 
         Button btnSaveFile = new Button("Zapisz");
         Button btnCancel = new Button("Anuluj");
-        btnCancel.setOnAction(e -> modal.close());
+
+        btnCancel.setOnAction(e -> {
+            txtName.clear();
+            lblError.setText("");
+            modal.close();
+        });
 
         btnSaveFile.setOnAction(e -> {
             String name = txtName.getText().trim();
@@ -338,7 +408,20 @@ public class ImageApp extends Application {
             }
 
             try {
-                java.awt.image.BufferedImage bImage = SwingFXUtils.fromFXImage(processedImage, null);
+                Image fxImage = processedView.getImage();
+                int width = (int) fxImage.getWidth();
+                int height = (int) fxImage.getHeight();
+
+                java.awt.image.BufferedImage bImage = new java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_RGB);
+                javafx.scene.image.PixelReader pixelReader = fxImage.getPixelReader();
+
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        int argb = pixelReader.getArgb(x, y);
+                        bImage.setRGB(x, y, argb);
+                    }
+                }
+
                 boolean success = ImageIO.write(bImage, "jpg", outputFile);
                 if (success) {
                     showToast(parent, "Zapisano obraz w pliku " + name + ".jpg", false);
@@ -346,7 +429,7 @@ public class ImageApp extends Application {
                 } else {
                     showToast(modal, "Nie udało się zapisać pliku " + name + ".jpg", true);
                 }
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 showToast(modal, "Nie udało się zapisać pliku " + name + ".jpg", true);
             }
         });
